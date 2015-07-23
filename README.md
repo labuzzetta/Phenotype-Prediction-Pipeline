@@ -19,9 +19,10 @@ All scripts involved in the creation of the pipeline are included in this reposi
 
 * SeqGSEA
 	+ 1-GenerateMatrices
-	+ 2-BuzzCut
-	+ 3-ElasticNet
-	+ 4-SPLS
+	+ 2-SeqGSEA
+	+ 3-BuzzCut
+	+ 4-ElasticNet
+	+ 5-SPLS
 
 There are also two other folders which contain scripts for other analyses that are used in the pipeline.
 
