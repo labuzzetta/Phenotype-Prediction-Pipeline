@@ -1,0 +1,9 @@
+Buzzcut was designed to be run with differential input from either EBSeq or CuffDiff, not the gene scores from SeqGSEA. Therefore, an edit to buzzcut.pl was made in order to accomodate this. buzzcut-editforSeqGSEA.pl is designed to use the count tables from RSEM (RSEM.gene.counts.matrix) and the Gene Score table that is created by the SeqGSEA analysis.
+
+Software: buzzcut-editforSeqGSEA.pl
+
+The software can accomodate SeqGSEA by using the RSEM.gene.counts.matrix and the SeqGSEA.geneScores.txt file that is created by running SeqGSEA. To filter by the gene scores, use the -filterFold option and start with a filter of 4. The value can be increased in order to make the number of significant genes identified decrease.
+
+Command to select Genes by gene score:
+
+perl buzzcut.pl -d SeqGSEA.geneScores.txt -c RSEM.gene.counts.matrix -o buzzcut-selected.genes.txt -filterFold -f 4

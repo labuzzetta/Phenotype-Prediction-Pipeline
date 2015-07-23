@@ -1,0 +1,10 @@
+SeqGSEA is an R package which must be downloaded from bioconductor. The following commands will facilitate its installation:
+
+> source("http://bioconductor.org/biocLite.R")
+> biocLite("SeqGSEA")
+
+Software: R Package - SeqGSEA
+
+Use the run_seqgsea.R script provided in this folder to run the SeqGSEA analysis. Note that several fields need to be edited in order to suit your analysis. Be sure to edit the ctrl.pattern, case.pattern, and geneset.file fields within the file itself. 
+
+In order to run a leave 2 out analysis you can model your script after the example given by run_seqgsea-leave-2-out.R The script is provided in this directory for your convenience.
