@@ -1,0 +1,3 @@
+Software: Tophat2
+
+tophat <path_to_genome_index> sample_name_forward_paired.fq.gz sample_name_reverse_paired.fq.gz 

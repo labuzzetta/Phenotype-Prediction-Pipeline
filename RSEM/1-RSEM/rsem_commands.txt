@@ -1,0 +1,26 @@
+RSEM requires many steps in order to build the reference indices, assemble the transcripts, calculate expression, and create data tables. These steps are outlined as follows:
+
+
+Software: rsem-1.2.21
+
+
+Building the Reference:
+
+rsem-1.2.21/rsem-prepare-reference --gtf <path_to_gtf_file> genome.fa genome
+
+
+Running Bowtie2 and Calculating Expression:
+
+rsem-1.2.21/rsem-calculate-expression --bowtie2 --phred33-quals --paired-end <path_to_forward_reads> <path_to_reverse_reads> <path_to_genome_directory> <sample_name>
+
+
+Create ngvector:
+
+rsem-1.2.21/rsem-generate-ngvector genome.transcripts.fa genome.ngvec
+
+
+Generate data tables:
+
+rsem-1.2.21/rsem-generate-data-matrix <Sample1.genes.results> <Sample2.genes.results> <Samples3.genes.results> > RSEM.gene.counts.matrix
+
+rsem-1.2.21/rsem-generate-data-matrix <Sample1.isoform.results> <Sample2.isoform.results> <Sample3.isoform.results> > RSEM.isoform.counts.matrix

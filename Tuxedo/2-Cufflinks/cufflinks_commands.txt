@@ -1,0 +1,42 @@
+Software: Cufflinks
+
+(Run for each Sample)
+
+cufflinks <path_to_bam_file> --GTF <path_to_gtf_file>
+
+
+
+
+Intermediate File: Create a file named assembly_list.txt with the paths to all of the transcripts.gtf files created by cufflinks.
+
+
+
+
+Software: CuffMerge
+
+(Run Once)
+
+cuffmerge -g <path_to_gtf_file> assembly_list.txt
+
+
+
+
+Intermediate File: cuffmerge will create merged.gtf which needs to be used in cuffquant.
+
+
+
+
+Software: CuffQuant
+
+(Run for each Sample)
+
+cuffquant <path_to_merged.gtf_file> <path_to_bam_file>
+
+
+
+
+Software: CuffDiff
+
+(Run Once)
+
+cuffdiff -L <pheno1>,<pheno2> Sample1/abundances.cxb,Sample2/abundances.cxb,Sample3/abundances.cxb Sample1/abundances.cxb,Sample2/abundances.cxb,Sample3/abundances.cxb

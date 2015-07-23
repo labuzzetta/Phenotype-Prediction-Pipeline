@@ -1,0 +1,23 @@
+To run ebseq, the data tables and ngvector created by RSEM are needed. EBSeq comes as part of the rsem-1.2.21 package.
+
+
+Software: EBSeq ---> Installed with rsem-1.2.21
+
+
+Run EBSeq for Genes:
+
+rsem-1.2.21/rsem-run-ebseq RSEM.gene.counts.matrix <#_Samples_in_Pheno1>,<#_Samples_in_Pheno2> EBSeq.results.genes.txt
+
+
+Run EBSeq for Isoforms: (remember to include the ngvector!!!)
+
+rsem-1.2.21/rsem-run-ebseq --ngvector rsem.ngvec RSEM.isoform.counts.matrix <#_Samples_in_Pheno1>,<#_Samples_in_Pheno2> EBSeq.results.isoforms.txt
+
+
+
+
+Run EBSeq Control FDR:
+
+rsem-1.2.21/rsem-control-fdr EBSeq.results.genes.txt 0.05 EBSeq.results.genes.fdr.txt
+
+rsem-1.2.21/rsem-control-fdr EBSeq.results.isoforms.txt 0.05 EBSeq.results.isoforms.txt
