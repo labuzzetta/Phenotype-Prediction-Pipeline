@@ -6,6 +6,15 @@ perl buzzcut.pl
 
 
 
+All files from RSEM must be sorted prior to using buzzcut.pl
+
+Command to sort files:
+
+cat <File_in> | awk 'NR == 1; NR > 1 {print $0 | "sort -k 1,1"}' > <File_out>
+
+
+
+
 
 Command to select Genes:
 
@@ -17,3 +26,11 @@ Command to select Isoforms:
 perl buzzcut.pl -d EBSeq.results.isoforms.txt -c RSEM.isoforms.counts.matrix -o buzzcut-selected.isoforms.txt -filterP
 
 
+
+
+
+Finally, the transpose of the matrix created by buzzcut needs to be created for the elastic net analysis. Use the following command and software:
+
+Software: transpose.jar (Downloaded from the Beagle Imputation Utilities)
+
+cat buzzcut-selected.genes.txt | java -jar transpose.jar > elasticNet.selected.genes.txt

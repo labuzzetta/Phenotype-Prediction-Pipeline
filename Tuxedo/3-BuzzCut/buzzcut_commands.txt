@@ -1,6 +1,6 @@
 Software: buzzcut.pl
 
-Buzzcut needs to be run on the gene_exp.diff and genes.read_group_tracking files, or the isoform_exp.diff and isoforms.read_group_tracking files that are created by cuffdiff. The software will select the differentially expressed genes or isoforms which are higher than the specified threshold. For more information about the avaiable options in buzzcut, type:
+Buzzcut needs to be run on the gene_exp.diff and genes.read_group_tracking files, or the isoform_exp.diff and isoforms.read_group_tracking files that are created by cuffdiff. Unlike the files from RSEM and SeqGSEA, these files do not need to be sorted. The software will select the differentially expressed genes or isoforms which are higher than the specified threshold. For more information about the avaiable options in buzzcut, type:
 
 perl buzzcut.pl
 

@@ -1,0 +1,3 @@
+iLOO can be used to filter outlier genes from RNA-Seq Samples. Filtering these outliers may improve the performance of the Elastic Net analysis for phenotype prediction. Using the model R script provided in this directory run_iLOO_Dendrogram.R a gene list of only genes which are not identified as outliers by iLOO can be created and used in to filter the genes in the Elastic Net. The sample script also creates dendrograms which display the sample distances before and after filtering with iLOO.
+
+Please see run_iLOO_Dendrogram.R

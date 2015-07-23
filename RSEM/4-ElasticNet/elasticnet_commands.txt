@@ -1,0 +1,45 @@
+Elastic Net analysis in R can be run with the "glmnet" and "AUC" packages. Both can be installed using the standard install.packages() command. The basic commands for the elasic net are:
+
+
+
+-----------------------------Elastic Net Predict Test Data--------------------------------
+
+
+library(glmnet)
+library(AUC)
+
+phenotypes <- c()
+
+labels <- c()
+
+tableTRAIN <- read.table("EBSeq-TRAIN-selected.genes.txt", sep=" ", header=TRUE)
+tableTEST <- read.table("EBSeq-TEST-selected.genes.txt", sep=" ", header=TRUE)
+
+matrixTRAIN <- data.matrix(tableTRAIN)
+matrixTEST <- data.matrix(tableTEST)
+
+TRAINCV <- cv.glmnet(matrixTRAIN, phenotypes, nfolds=10, type.measure="deviance")
+
+prediction <- predict(TRAINCV, matrixTEST)
+
+predictionList <- c(predictionList, prediction)
+
+print(predictionList)
+
+labels <- factor(labels)
+
+print("Area Under ROC:")
+print(auc(roc(predictionList, labels)))
+print("Accuracy:")
+print(auc(accuracy(predictionList, labels)))
+print("Sensitivity:")
+print(auc(sensitivity(predictionList, labels)))
+print("Specificity:")
+print(auc(specificity(predictionList, labels)))
+
+plot(roc(predictionList, labels))directories <- list.dirs(recursive=FALSE)
+
+
+------------------------------------------------------------------------------------------
+
+Further analysis can be completed using an iterative approach to a leave-2-out test performed with EBSeq. An example script is contained in this directory for running such a test.
