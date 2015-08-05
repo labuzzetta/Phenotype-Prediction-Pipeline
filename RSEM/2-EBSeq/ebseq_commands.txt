@@ -1,4 +1,4 @@
-To run ebseq, the data tables and ngvector created by RSEM are needed. EBSeq comes as part of the rsem-1.2.21 package.
+To run ebseq, the data tables and ngvector created by RSEM are needed. EBSeq comes as an R package in the rsem-1.2.21 package.
 
 
 Software: EBSeq ---> Installed with rsem-1.2.21
