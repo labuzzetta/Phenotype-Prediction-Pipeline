@@ -1,13 +1,16 @@
+##Phenotype Prediction Pipeline shinyApp.R##
+
 library(shiny)
-ui <- fluidPage(pageWithSidebar(
-  headerPanel("Phenotype Prediction Pipeline"), 
-  sidebarPanel(
-    
-  ), 
-  mainPanel(
-    
-  )))
+library(shinydashboard)
+
+ui <- dashboardPage(
+  dashboardHeader(),
+  dashboardSidebar(),
+  dashboardBody()
+)
+
 server <- function(input, output) {
   
 }
+
 shinyApp(ui, server)
