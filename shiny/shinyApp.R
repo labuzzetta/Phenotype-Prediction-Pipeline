@@ -4,12 +4,14 @@ library(shiny)
 library(shinydashboard)
 
 sidebar <- dashboardSidebar(
-  menuItem("Predict Unknowns", tabName = "unknowns", icon = icon("magic"),
+  sidebarMenu(
+    menuItem("Predict Unknowns", tabName = "unknowns", icon = icon("magic"),
            badgeLabel = "new", badgeColor = "green"),
-  menuItem("Cross Validation", tabName = "validation", icon = icon("line-chart"),
+    menuItem("Cross Validation", tabName = "validation", icon = icon("line-chart"),
            badgeLabel = "new", badgeColor = "green"),
-  menuItem("Clone via Github", icon = icon("github"), 
+    menuItem("Clone via Github", icon = icon("github"), 
            href = "https://github.com/clabuzze/Phenotype-Prediction-Pipeline.git")
+  )
 )
 
 body <- dashboardBody(
