@@ -1,8 +1,6 @@
 library(shiny)
 ui <- fluidPage(pageWithSidebar(
-  headerPanel(
-    
-  ), 
+  headerPanel("Phenotype Prediction Pipeline"), 
   sidebarPanel(
     
   ), 
