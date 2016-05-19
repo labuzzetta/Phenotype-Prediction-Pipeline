@@ -11,7 +11,7 @@ sidebar <- dashboardSidebar(
            badgeLabel = "new", badgeColor = "green"),
     menuItem("Clone via Github", icon = icon("github"), 
            href = "https://github.com/clabuzze/Phenotype-Prediction-Pipeline.git"),
-    menuItem("Publication", icon = icon("flask"), href = "",
+    menuItem("Publication", icon = icon("flask"), href = NULL,
            badgeLabel = "coming soon", badgeColor = "blue"),
     fileInput(inputId = "data", label="Upload Expression Table")
   )
@@ -21,7 +21,25 @@ body <- dashboardBody(
   tabItems(
     tabItem(tabName = "unknowns",
             tags$div(
-              HTML("<center><h2>Predict Phenotype of Unknown Samples</h2></center>")
+              HTML("<center><h2>Predict Phenotype of Unknown Sample</h2></center>")
+            ),
+            box(
+              title = "Inputs", status = "warning", solidHeader = TRUE, width = NULL,
+              column(width = 6,
+                     sliderInput("knownPheno1", "Column Range of Phenotype 1:", min = 1, max = 30, value = c(2,16), ticks = FALSE),
+                     sliderInput("knownPheno2", "Column Range of Phenotype 2:", min = 1, max = 30, value = c(17,31), ticks = FALSE),
+                     sliderInput("unknownSample", "Column of Sample to Predict Phenotype:", min = 1, max = 30, value = 1, ticks = FALSE)
+              ),
+              column(width = 6,
+                     textInput("pValue", label = "P-Value for Differential Expression", value = 0.05),
+                     radioButtons("SelFil",label = "Select Filtering Method",choices = list("None", "MVP"),inline = TRUE),
+                     actionButton("run.predictor", "Click to predict")
+              )
+            ),
+            box(
+              title = "Prediction", status = "warning", solidHeader = TRUE, width = NULL,
+              textOutput("predRF"), br(),
+              textOutput("predEN")
             )
     ),
     
@@ -65,6 +83,121 @@ ui <- dashboardPage(
 )
 
 server <- function(input, output) {
+  
+  predictor <- observeEvent(input$run.predictor, {
+    
+    tableIn <- read.table(input$data$datapath, header=T)
+    
+    expTable <- data.matrix(tableIn[,input$knownPheno1[1]:input$knownPheno1[2]])
+    ctrlTable <- data.matrix(tableIn[,input$knownPheno2[1]:input$knownPheno2[2]])
+    unknownSample <- data.matrix(tableIn[,input$unknownSample])
+    
+    p_value <- input$pValue
+    
+    exp <- data.matrix(expTable)
+    ctrl <- data.matrix(ctrlTable)
+    test <- data.matrix(unknownSample)
+    
+    genes <- c()
+    labels <- c()
+    predictionListElasticNet <- c()
+    predictionListRandomForest <- c()
+    predictionListSPLS <- c()
+    total_features = 0
+    quant = 0
+    
+    MVPq <- FALSE
+    if(input$SelFil == "MVP"){
+      MVPq <- TRUE
+    }
+    
+    exp_test = data.matrix(exp)
+    ctrl_test = data.matrix(ctrl)
+    
+    train_matrix = cbind(exp, ctrl)
+    test_matrix = test
+    row.names(test_matrix) <- row.names(train_matrix)
+    
+    complete_test <- cbind(train_matrix, test_matrix)
+    train_matrix <- train_matrix[complete.cases(complete_test),]
+    test_matrix <- test_matrix[complete.cases(complete_test),]
+    test_matrix <- data.matrix(test_matrix)
+    
+    if(MVPq == TRUE){
+      row_sub = apply(train_matrix, 1, function(row) (all(row != 0)))
+      train_matrix <- train_matrix[row_sub,]
+      test_matrix <- data.matrix(test_matrix[row_sub,])
+      
+      row_sub = apply(test_matrix,1, function(row) (all(row != 0)))
+      train_matrix <- train_matrix[row_sub,]
+      test_matrix <- data.matrix(test_matrix[row_sub,])
+      
+      quant = 0.9
+    }
+    
+    train_matrix <- train_matrix * 100
+    test_matrix <- test_matrix * 100
+    train_matrix <- round(train_matrix,10)
+    test_matrix <- round(test_matrix,10)
+    
+    t_test <- data.matrix(apply(train_matrix,1,function(x){
+      obj<-try(t.test(x[1:(ncol(exp))],x[(ncol(exp)+1):((ncol(exp))+(ncol(ctrl)))]), silent=TRUE)
+      if (is(obj, "try-error")) return(NA)
+      else return(obj$p.value)
+    }))
+    
+    train_matrix <- data.matrix(train_matrix[t_test[,1] < p_value & !is.na(t_test[,1]),])
+    test_matrix <- data.matrix(test_matrix[t_test[,1] < p_value & !is.na(t_test[,1]),])
+    row.names(test_matrix) <- row.names(train_matrix)
+    
+    input <- cbind(train_matrix, test_matrix)
+    
+    returned <- apply(input,1,try(function(row){
+      curve <- density(row[1:(ncol(exp))])
+      data <- (c(mean(curve$x), var(curve$x)))
+    }))
+    
+    returned2 <- apply(input,1,try(function(row){
+      curve <- density(row[(ncol(exp)+1):((ncol(exp))+(ncol(ctrl)))])
+      data <- (c(mean(curve$x), var(curve$x)))
+    }))
+    
+    test_matrix <- t(test_matrix[abs(returned[1,] - returned2[1,])/(returned[2,] + returned2[2,])>quantile(abs(returned[1,] - returned2[1,])/(returned[2,] + returned2[2,]),quant),])
+    train_matrix <- t(train_matrix[abs(returned[1,] - returned2[1,])/(returned[2,] + returned2[2,])>quantile(abs(returned[1,] - returned2[1,])/(returned[2,] + returned2[2,]),quant),]) 
+    
+    test_matrix <- test_matrix[,apply(train_matrix,2,var)>0.1e-50]
+    train_matrix <- train_matrix[,apply(train_matrix,2,var)>0.1e-50]
+    test_matrix <- t(data.matrix(test_matrix))
+    
+    library(randomForest)
+    library(pROC)
+    library(stringr)
+    
+    phenotypes <- c(rep(0,ncol(exp)), rep(1,ncol(ctrl)))
+    
+    total_features = total_features + ncol(test_matrix)
+    
+    RandomForestCV <- randomForest(train_matrix, phenotypes)
+    
+    predictionRandomForest <- predict(RandomForestCV, test_matrix)
+    
+    predictionOutRF <- predictionRandomForest
+    
+    
+    library(glmnet)
+    library(pROC)
+    library(stringr)
+    
+    ElasticNetCV <- cv.glmnet(train_matrix, phenotypes, nfolds=nrow(train_matrix), type.measure="deviance")
+    
+    predictionElasticNet <- predict(ElasticNetCV, test_matrix)
+    
+    predictionOutEN <- predictionElasticNet
+      
+  
+    output$predRF <- renderPrint(predictionOutRF)
+    output$predEN <- renderPrint(predictionOutEN)
+  })
   
   validate <- observeEvent(input$run.validate, {
     
