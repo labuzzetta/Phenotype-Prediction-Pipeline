@@ -11,6 +11,8 @@ sidebar <- dashboardSidebar(
            badgeLabel = "new", badgeColor = "green"),
     menuItem("Clone via Github", icon = icon("github"), 
            href = "https://github.com/clabuzze/Phenotype-Prediction-Pipeline.git"),
+    menuItem("Publication", icon = icon("flask"), href = "",
+           badgeLabel = "coming soon", badgeColor = "blue"),
     fileInput(inputId = "data", label="Upload Expression Table")
   )
 )
@@ -18,33 +20,38 @@ sidebar <- dashboardSidebar(
 body <- dashboardBody(
   tabItems(
     tabItem(tabName = "unknowns",
-            h2("Predict Phenotype of Unknown Samples")
-
+            tags$div(
+              HTML("<center><h2>Predict Phenotype of Unknown Samples</h2></center>")
+            )
     ),
     
     tabItem(tabName = "validation",
-            h2("Cross Validate Machine Learning Methods"),
+            tags$div(
+              HTML("<center><h2>Cross Validate Machine Learning Methods</h2></center>")
+            ),
             box(
-              title = "Inputs", status = "warning", solidHeader = TRUE,
-              "Select the range of columns in the uploaded expression file corresponding to each phenotype with the sliders.",
-              sliderInput("colPheno1", "Phenotype 1:", min = 1, max = 30, value = c(1,15), ticks = FALSE),
-              sliderInput("colPheno2", "Phenotype 2:", min = 1, max = 30, value = c(16,30), ticks = FALSE),
-              "Input a p-value to identify differentially expressed transcripts.",
-              textInput("pValue", label = NULL, value = 0.05),
-              radioButtons("SelFil",label = "Select Filtering Method",choices = list("None", "MVP"),inline = TRUE),
-              actionButton("run.validate", "Click to run validation")
+              title = "Inputs", status = "warning", solidHeader = TRUE, width = NULL,
+              column(width = 6,
+                sliderInput("colPheno1", "Column Range of Phenotype 1:", min = 1, max = 30, value = c(1,15), ticks = FALSE),
+                sliderInput("colPheno2", "Column Range of Phenotype 2:", min = 1, max = 30, value = c(16,30), ticks = FALSE)
+              ),
+              column(width = 6,
+                textInput("pValue", label = "P-Value for Differential Expression", value = 0.05),
+                radioButtons("SelFil",label = "Select Filtering Method",choices = list("None", "MVP"),inline = TRUE),
+                actionButton("run.validate", "Click to run validation")
+              )
             ),
             box(
               title = "Random Forest ROC Curve Analysis", status = "primary", solidHeader = TRUE,
-              collapsible = TRUE,
-              plotOutput("rocRF.plot", height = 180),
+              collapsible = TRUE, width = 6, collapsed = FALSE,
+              plotOutput("rocRF.plot", height = 250), 
               textOutput("rocRF.mla"),
               textOutput("rocRF.roc")
             ),
             box(
               title = "Elastic Net ROC Curve Analysis", status = "primary", solidHeader = TRUE,
-              collapsible = TRUE,
-              plotOutput("rocEN.plot", height = 180),
+              collapsible = TRUE, width = 6, collapsed = FALSE,
+              plotOutput("rocEN.plot", height = 250),
               textOutput("rocEN.mla"),
               textOutput("rocEN.roc")
             )
