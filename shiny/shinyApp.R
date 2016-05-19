@@ -183,6 +183,8 @@ server <- function(input, output) {
     
     predictionOutRF <- predictionRandomForest
     
+    predictionOutRF
+    
     
     library(glmnet)
     library(pROC)
@@ -194,9 +196,20 @@ server <- function(input, output) {
     
     predictionOutEN <- predictionElasticNet
       
+    if(round(predictionOutRF) <= 0){
+      predictionRF <- "Random Forest predicts this sample belongs to: Phenotype 1"
+    }else{
+      predictionRF <- "Random Forest predicts this sample belongs to: Phenotype 2"
+    }
+    
+    if(round(predictionOutEN) <= 0){
+      predictionEN <- "Elastic Net predicts this sample belongs to: Phenotype 1"
+    }else{
+      predictionEN <- "Elastic Net predicts this sample belongs to: Phenotype 2"
+    }
   
-    output$predRF <- renderPrint(predictionOutRF)
-    output$predEN <- renderPrint(predictionOutEN)
+    output$predRF <- renderPrint(predictionRF)
+    output$predEN <- renderPrint(predictionEN)
   })
   
   validate <- observeEvent(input$run.validate, {
