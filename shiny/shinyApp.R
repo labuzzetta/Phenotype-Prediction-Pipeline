@@ -5,6 +5,8 @@ library(shinydashboard)
 
 sidebar <- dashboardSidebar(
   sidebarMenu(
+    menuItem("Getting Started", tabName = "start", icon = icon("home")),
+    menuItemOutput("dataDisplay"),
     menuItem("Predict Unknowns", tabName = "unknowns", icon = icon("magic"),
            badgeLabel = "new", badgeColor = "green"),
     menuItem("Cross Validation", tabName = "validation", icon = icon("line-chart"),
@@ -13,12 +15,23 @@ sidebar <- dashboardSidebar(
            href = "https://github.com/clabuzze/Phenotype-Prediction-Pipeline.git"),
     menuItem("Publication", icon = icon("flask"), href = NULL,
            badgeLabel = "coming soon", badgeColor = "blue"),
-    fileInput(inputId = "data", label="Upload Expression Table")
+    fileInput(inputId = "data", label="1. Upload training dataset"),
+    uiOutput("pheno1slider"),
+    uiOutput("pheno2slider")
   )
 )
 
 body <- dashboardBody(
   tabItems(
+    tabItem(tabName = "start",
+            tags$div(
+              HTML("<center><h2>Getting Started with MVP</h2></center>")
+            )),
+    tabItem(tabName = "display",
+            tags$div(
+              HTML("<center><h2>Uploaded Data</h2></center>")
+            ),
+            dataTableOutput("dataTable")),
     tabItem(tabName = "unknowns",
             tags$div(
               HTML("<center><h2>Predict Phenotype of Unknown Sample</h2></center>")
@@ -26,14 +39,14 @@ body <- dashboardBody(
             box(
               title = "Inputs", status = "warning", solidHeader = TRUE, width = NULL,
               column(width = 6,
-                     sliderInput("knownPheno1", "Column Range of Phenotype 1:", min = 1, max = 30, value = c(2,16), ticks = FALSE),
-                     sliderInput("knownPheno2", "Column Range of Phenotype 2:", min = 1, max = 30, value = c(17,31), ticks = FALSE),
-                     sliderInput("unknownSample", "Column of Sample to Predict Phenotype:", min = 1, max = 30, value = 1, ticks = FALSE)
+                     strong("1. Upload training dataset via sidebar"), p(), strong("2. Select column of unknown sample"),
+                     #fileInput(inputId = "testing", label="2. Upload testing dataset"),
+                     uiOutput("unknown")
               ),
               column(width = 6,
-                     textInput("pValue", label = "P-Value for Differential Expression", value = 0.05),
-                     radioButtons("SelFil",label = "Select Filtering Method",choices = list("None", "MVP"),inline = TRUE),
-                     actionButton("run.predictor", "Click to predict")
+                     textInput("pValue", label = "3. Input p value for differential expression", value = 0.05, placeholder = 0.05),
+                     radioButtons("SelFil",label = "4. Select filtering method", choices = list("MVP", "None"), inline = TRUE, selected = "MVP"),
+                     uiOutput("predict")
               )
             ),
             box(
@@ -50,13 +63,12 @@ body <- dashboardBody(
             box(
               title = "Inputs", status = "warning", solidHeader = TRUE, width = NULL,
               column(width = 6,
-                sliderInput("colPheno1", "Column Range of Phenotype 1:", min = 1, max = 30, value = c(1,15), ticks = FALSE),
-                sliderInput("colPheno2", "Column Range of Phenotype 2:", min = 1, max = 30, value = c(16,30), ticks = FALSE)
+                strong("1. Upload training dataset via sidebar"),p(),
+                textInput("pValue", label = "2. Input p value for differential expression", value = 0.05, placeholder = 0.05)
               ),
               column(width = 6,
-                textInput("pValue", label = "P-Value for Differential Expression", value = 0.05),
-                radioButtons("SelFil",label = "Select Filtering Method",choices = list("None", "MVP"),inline = TRUE),
-                actionButton("run.validate", "Click to run validation")
+                radioButtons("SelFil", label = "3. Select filtering method", choices = list("MVP", "None"), inline = TRUE, selected = "MVP"),
+                uiOutput("validation")
               )
             ),
             box(
@@ -84,15 +96,50 @@ ui <- dashboardPage(
 
 server <- function(input, output) {
   
+  fileRender <- observeEvent(input$data, {
+    
+    datatemp <- read.table(input$data$datapath)
+      
+    output$pheno1slider <- renderUI({
+      sliderInput("pheno1sliderIn", "Select columns of phenotype 1:", step = 1, ticks = FALSE, min=1, max=ncol(datatemp), value=c(1,(ncol(datatemp)/2)))
+    })
+    
+    output$pheno2slider <- renderUI({
+      sliderInput("pheno2sliderIn", "Select columns of phenotype 2:", step = 1, ticks = FALSE, min=1, max=ncol(datatemp), value=c(((ncol(datatemp)/2)+1),ncol(datatemp)))
+    })
+    
+    output$validation <- renderUI({
+      actionButton("run.validate", "Run validation")
+    })
+    
+    output$unknown <- renderUI({
+      sliderInput("unknownSampleIn", label=NULL, step = 1, ticks = FALSE, min=1, max=ncol(datatemp), value=1)
+    })
+    
+    output$predict <- renderUI({
+      actionButton("run.predictor", "Run prediction")
+    })
+    
+    output$dataDisplay <- renderMenu({menuItem("Data Display", tabName = "display", icon = icon("database"),
+                                              badgeLabel = "Look at me", badgeColor = "orange")})
+    
+    output$dataTable <- renderDataTable({datatemp}, options=list(scrollX=TRUE))
+    
+    
+  })
+  
   predictor <- observeEvent(input$run.predictor, {
     
     tableIn <- read.table(input$data$datapath, header=T)
     
-    expTable <- data.matrix(tableIn[,input$knownPheno1[1]:input$knownPheno1[2]])
-    ctrlTable <- data.matrix(tableIn[,input$knownPheno2[1]:input$knownPheno2[2]])
-    unknownSample <- data.matrix(tableIn[,input$unknownSample])
+    expTable <- data.matrix(tableIn[,input$pheno1sliderIn[1]:input$pheno1sliderIn[2]])
+    ctrlTable <- data.matrix(tableIn[,input$pheno2sliderIn[1]:input$pheno2sliderIn[2]])
+    unknownSample <- data.matrix(tableIn[,input$unknownSampleIn])
     
-    p_value <- input$pValue
+    p_value <- 0.05
+    if(input$pValue != ""){
+      p_value <- as.numeric(input$pValue)
+    }
     
     exp <- data.matrix(expTable)
     ctrl <- data.matrix(ctrlTable)
@@ -216,10 +263,13 @@ server <- function(input, output) {
     
     tableIn <- read.table(input$data$datapath, header=T)
     
-    expTable <- data.matrix(tableIn[,input$colPheno1[1]:input$colPheno1[2]])
-    ctrlTable <- data.matrix(tableIn[,input$colPheno2[1]:input$colPheno2[2]])
+    expTable <- data.matrix(tableIn[,input$pheno1sliderIn[1]:input$pheno1sliderIn[2]])
+    ctrlTable <- data.matrix(tableIn[,input$pheno2sliderIn[1]:input$pheno2sliderIn[2]])
     
-    p_value <- input$pValue
+    p_value <- 0.05
+    if(input$pValue != ""){
+      p_value <- as.numeric(input$pValue)
+    }
 
     exp <- data.matrix(expTable)
     ctrl <- data.matrix(ctrlTable)
