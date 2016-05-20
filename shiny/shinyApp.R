@@ -101,11 +101,13 @@ server <- function(input, output) {
     datatemp <- read.table(input$data$datapath)
       
     output$pheno1slider <- renderUI({
-      sliderInput("pheno1sliderIn", "Select columns of phenotype 1:", step = 1, ticks = FALSE, min=1, max=ncol(datatemp), value=c(1,(ncol(datatemp)/2)))
+      #sliderInput("pheno1sliderIn", "Select columns of phenotype 1:", step = 1, ticks = FALSE, min=1, max=ncol(datatemp), value=c(1,(ncol(datatemp)/2)))
+      checkboxGroupInput("pheno1checkIn", "Select columns of phenotype 1:", choices = c(1:ncol(datatemp)), inline = TRUE, selected = c(1:(ncol(datatemp)/2)))
     })
     
     output$pheno2slider <- renderUI({
-      sliderInput("pheno2sliderIn", "Select columns of phenotype 2:", step = 1, ticks = FALSE, min=1, max=ncol(datatemp), value=c(((ncol(datatemp)/2)+1),ncol(datatemp)))
+      #sliderInput("pheno2sliderIn", "Select columns of phenotype 2:", step = 1, ticks = FALSE, min=1, max=ncol(datatemp), value=c(((ncol(datatemp)/2)+1),ncol(datatemp)))
+      checkboxGroupInput("pheno2checkIn", "Select columns of phenotype 2:", choices = c(1:ncol(datatemp)), inline = TRUE, selected = c(((ncol(datatemp)/2)+1):ncol(datatemp)))
     })
     
     output$validation <- renderUI({
@@ -113,7 +115,8 @@ server <- function(input, output) {
     })
     
     output$unknown <- renderUI({
-      sliderInput("unknownSampleIn", label=NULL, step = 1, ticks = FALSE, min=1, max=ncol(datatemp), value=1)
+      #checkboxGroupInput("unknownSampleIn", label=NULL, choices = c(1:ncol(datatemp)), inline = TRUE)
+      radioButtons("unknownSampleIn", label=NULL, choices = c(1:ncol(datatemp)), inline = TRUE, selected = 1)
     })
     
     output$predict <- renderUI({
@@ -125,16 +128,17 @@ server <- function(input, output) {
     
     output$dataTable <- renderDataTable({datatemp}, options=list(scrollX=TRUE))
     
-    
   })
   
   predictor <- observeEvent(input$run.predictor, {
     
+   withProgress(message = 'Processing', value = 0, {
+    
     tableIn <- read.table(input$data$datapath, header=T)
     
-    expTable <- data.matrix(tableIn[,input$pheno1sliderIn[1]:input$pheno1sliderIn[2]])
-    ctrlTable <- data.matrix(tableIn[,input$pheno2sliderIn[1]:input$pheno2sliderIn[2]])
-    unknownSample <- data.matrix(tableIn[,input$unknownSampleIn])
+    expTable <- data.matrix(tableIn[,as.numeric(input$pheno1checkIn)])
+    ctrlTable <- data.matrix(tableIn[,as.numeric(input$pheno2checkIn)])
+    unknownSample <- data.matrix(tableIn[,as.numeric(input$unknownSampleIn)])
     
     p_value <- 0.05
     if(input$pValue != ""){
@@ -187,6 +191,8 @@ server <- function(input, output) {
     train_matrix <- round(train_matrix,10)
     test_matrix <- round(test_matrix,10)
     
+    incProgress(1/3, detail = paste("Doing part", 1, "of", 3))
+    
     t_test <- data.matrix(apply(train_matrix,1,function(x){
       obj<-try(t.test(x[1:(ncol(exp))],x[(ncol(exp)+1):((ncol(exp))+(ncol(ctrl)))]), silent=TRUE)
       if (is(obj, "try-error")) return(NA)
@@ -216,6 +222,8 @@ server <- function(input, output) {
     train_matrix <- train_matrix[,apply(train_matrix,2,var)>0.1e-50]
     test_matrix <- t(data.matrix(test_matrix))
     
+    incProgress(1/3, detail = paste("Doing part", 2, "of", 3))
+    
     library(randomForest)
     library(pROC)
     library(stringr)
@@ -232,6 +240,7 @@ server <- function(input, output) {
     
     predictionOutRF
     
+    incProgress(1/3, detail = paste("Doing part", 3, "of", 3))
     
     library(glmnet)
     library(pROC)
@@ -255,16 +264,19 @@ server <- function(input, output) {
       predictionEN <- "Elastic Net predicts this sample belongs to: Phenotype 2"
     }
   
-    output$predRF <- renderPrint(predictionRF)
-    output$predEN <- renderPrint(predictionEN)
+    output$predRF <- renderText(predictionRF)
+    output$predEN <- renderText(predictionEN)
+   
+   })   
+   
   })
   
   validate <- observeEvent(input$run.validate, {
     
     tableIn <- read.table(input$data$datapath, header=T)
     
-    expTable <- data.matrix(tableIn[,input$pheno1sliderIn[1]:input$pheno1sliderIn[2]])
-    ctrlTable <- data.matrix(tableIn[,input$pheno2sliderIn[1]:input$pheno2sliderIn[2]])
+    expTable <- data.matrix(tableIn[,as.numeric(input$pheno1checkIn)])
+    ctrlTable <- data.matrix(tableIn[,as.numeric(input$pheno2checkIn)])
     
     p_value <- 0.05
     if(input$pValue != ""){
@@ -397,12 +409,12 @@ server <- function(input, output) {
     
       rocRF <- roc(labels, predictionListRandomForest, plot=FALSE)
       output$rocRF.plot <- renderPlot({plot.roc(rocRF)})
-      output$rocRF.mla <- renderPrint("Random Forest")
+      output$rocRF.mla <- renderText("Random Forest")
       output$rocRF.roc <- renderPrint(rocRF$auc)
       
       rocEN <- roc(labels, predictionListElasticNet, plot=FALSE)
       output$rocEN.plot <- renderPlot({plot.roc(rocEN)})
-      output$rocEN.mla <- renderPrint("Elastic Net")
+      output$rocEN.mla <- renderText("Elastic Net")
       output$rocEN.roc <- renderPrint(rocEN$auc)
     
   })
