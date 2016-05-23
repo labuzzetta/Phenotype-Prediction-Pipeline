@@ -16,6 +16,7 @@ sidebar <- dashboardSidebar(
     menuItem("Publication", icon = icon("flask"), href = NULL,
            badgeLabel = "coming soon", badgeColor = "blue"),
     fileInput(inputId = "data", label="1. Upload training dataset"),
+    
     uiOutput("pheno1slider"),
     uiOutput("pheno2slider")
   )
@@ -26,7 +27,10 @@ body <- dashboardBody(
     tabItem(tabName = "start",
             tags$div(
               HTML("<center><h2>Getting Started with MVP</h2></center>")
-            )),
+            ),
+            actionButton("simulateData", "Simulate a dataset"),
+            uiOutput("download")
+            ),
     tabItem(tabName = "display",
             tags$div(
               HTML("<center><h2>Uploaded Data</h2></center>")
@@ -416,6 +420,25 @@ server <- function(input, output) {
       output$rocEN.plot <- renderPlot({plot.roc(rocEN)})
       output$rocEN.mla <- renderText("Elastic Net")
       output$rocEN.roc <- renderPrint(rocEN$auc)
+    
+  })
+  
+  simulate <- observeEvent(input$simulateData, {
+    
+    library(optBiomarker)
+    
+    simulated <- simData(nTrain = 20, nBiom = 1000)
+    
+    datatemp <- data.matrix(t(data.matrix(simulated$data)))
+    
+    output$download <- renderUI(downloadButton('downloadData', 'Download'))
+    
+    output$downloadData <- downloadHandler(
+      filename = function() { paste("simulated", '.txt', sep='') },
+      content = function(file) {
+        write.table(datatemp, file, sep="\t")
+      }
+    )
     
   })
   
